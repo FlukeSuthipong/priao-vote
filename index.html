@@ -692,7 +692,7 @@ function renderCards() {
 
   grid.innerHTML = BRANCHES.map(b => {
     const isVoted    = alreadyVotedId === b.id;
-    const isDisabled = hasVoted();
+    const isDisabled = hasVoted() || !visitorId;
     const hasClip    = b.clipUrl && b.clipUrl !== '#';
 
     return `
@@ -808,6 +808,7 @@ async function init() {
   } catch {
     visitorId = `fallback-${Math.random().toString(36).slice(2)}`;
   }
+  renderCards();
 }
 
 document.addEventListener('DOMContentLoaded', init);
