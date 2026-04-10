@@ -751,37 +751,21 @@ async function submitVote(branchId, empId) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
   try {
-    const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      redirect: 'follow',
       body: JSON.stringify({ branchId, empId, visitorId, timestamp: new Date().toISOString(), userAgent: navigator.userAgent }),
     });
-    const json = await res.json();
-
-    if (json.status === 'duplicate_emp') {
-      toast('warn', 'รหัสพนักงานนี้โหวตแล้ว', `EmpID ${empId} เคยโหวตไปแล้ว`);
-      saveState(branchId, empId);
-    } else if (json.status === 'duplicate') {
-      toast('warn', 'โหวตซ้ำ', 'เครื่องนี้เคยโหวตไปแล้ว');
-      saveState(branchId, empId);
-    } else if (json.status === 'ok') {
-      saveState(branchId, empId);
-      toast('success', 'โหวตสำเร็จ! 🎊', `ขอบคุณ EmpID ${empId} ที่โหวตให้ ${branchId}`);
-      localVoteCounts[branchId] = (localVoteCounts[branchId] || 0) + 1;
-    } else {
-      throw new Error(json.message || 'Unknown error');
-    }
   } catch (err) {
-    console.error(err);
-    saveState(branchId, empId);
-    toast('success', 'โหวตสำเร็จ! 🎊', `ขอบคุณที่โหวตให้ ${branchId}`);
-    localVoteCounts[branchId] = (localVoteCounts[branchId] || 0) + 1;
-  } finally {
-    if (btn) btn.classList.remove('loading');
-    renderCards();
-    updateTotalVotes();
+    console.error('fetch error:', err);
   }
+  saveState(branchId, empId);
+  toast('success', 'โหวตสำเร็จ! 🎊', `ขอบคุณ EmpID ${empId} ที่โหวตให้ ${branchId}`);
+  localVoteCounts[branchId] = (localVoteCounts[branchId] || 0) + 1;
+  if (btn) btn.classList.remove('loading');
+  renderCards();
+  updateTotalVotes();
 }
 
 // ─── TOTAL VOTES ─────────────────────────────────────────────────────────────
