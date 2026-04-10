@@ -527,8 +527,8 @@
     <p>ชมคลิปกิจกรรมของแต่ละสาขา แล้วโหวตให้สาขาที่คุณชอบ — 1 คน 1 สาขาเท่านั้น</p>
     <div class="hero-stats">
       <div class="stat">
-        <span class="stat-num" id="total-votes">—</span>
-        <span class="stat-label">โหวตทั้งหมด</span>
+        <span class="stat-num" id="countdown-timer" style="font-size:1.4rem;letter-spacing:0.05em">--:--:--</span>
+        <span class="stat-label" id="countdown-label">เวลาที่เหลือ</span>
       </div>
       <div class="stat">
         <span class="stat-num">8</span>
@@ -693,7 +693,7 @@ function renderCards() {
 
   grid.innerHTML = BRANCHES.map(b => {
     const isVoted    = alreadyVotedId === b.id;
-    const isDisabled = hasVoted() || !visitorId;
+    const isDisabled = hasVoted() || !visitorId || isVotingClosed();
     const hasClip    = b.clipUrl && b.clipUrl !== '#';
 
     return `
@@ -768,11 +768,34 @@ async function submitVote(branchId, empId) {
   updateTotalVotes();
 }
 
-// ─── TOTAL VOTES ─────────────────────────────────────────────────────────────
-function updateTotalVotes() {
-  const total = Object.values(localVoteCounts).reduce((a, b) => a + b, 0);
-  if (total > 0) document.getElementById('total-votes').textContent = total;
+// ─── COUNTDOWN TIMER ─────────────────────────────────────────────────────────
+const VOTE_DEADLINE = new Date('2026-04-16T12:00:00+07:00');
+
+function updateCountdown() {
+  const now  = new Date();
+  const diff = VOTE_DEADLINE - now;
+  const timerEl = document.getElementById('countdown-timer');
+  const labelEl = document.getElementById('countdown-label');
+  if (!timerEl) return;
+  if (diff <= 0) {
+    timerEl.textContent = 'หมดเวลาแล้ว';
+    timerEl.style.color = 'var(--danger)';
+    labelEl.textContent = 'การโหวตปิดแล้ว';
+    return;
+  }
+  const days    = Math.floor(diff / (1000*60*60*24));
+  const hours   = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const seconds = Math.floor((diff % (1000*60)) / 1000);
+  timerEl.textContent = (days > 0 ? days + 'd ' : '') +
+    String(hours).padStart(2,'0') + ':' +
+    String(minutes).padStart(2,'0') + ':' +
+    String(seconds).padStart(2,'0');
+  labelEl.textContent = 'เวลาที่เหลือ';
 }
+
+function isVotingClosed() { return new Date() >= VOTE_DEADLINE; }
+function updateTotalVotes() {}
 
 // ─── TOKEN CHECK ─────────────────────────────────────────────────────────────
 function checkToken() {
@@ -788,6 +811,8 @@ async function init() {
   document.getElementById('main-page').style.display = 'block';
   loadState();
   renderCards();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
   try {
     const fp = await FingerprintJS.load();
     visitorId = (await fp.get()).visitorId;
