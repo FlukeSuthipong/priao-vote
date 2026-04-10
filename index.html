@@ -753,7 +753,7 @@ async function submitVote(branchId, empId) {
     const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      redirect: 'follow':,
+      redirect: 'follow',
       body: JSON.stringify({ branchId, empId, visitorId, timestamp: new Date().toISOString(), userAgent: navigator.userAgent }),
     });
     const json = await res.json();
