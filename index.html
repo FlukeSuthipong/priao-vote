@@ -679,8 +679,9 @@ async function confirmVote() {
     document.getElementById('emp-hint').classList.add('err');
     return;
   }
-  closeModal();
-  await submitVote(pendingBranchId, empId);
+const branchToVote = pendingBranchId;
+closeModal();
+await submitVote(branchToVote, empId);
 }
 
 // ─── RENDER CARDS ────────────────────────────────────────────────────────────
