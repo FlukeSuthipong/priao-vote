@@ -632,6 +632,20 @@
       .podium-2 .podium-block { height: 72px; }
       .podium-3 .podium-block { height: 52px; }
     }
+
+    /* ─── Announcement Box ─── */
+    .announcement-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent2);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-top: 40px;
+      white-space: pre-line;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -710,6 +724,16 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxVYLE557iMyYVQCtbjX9JkXM-zLaMTkF7vGXe7h3RPEgkGiqMo9AtzjAJFmEl1CjjCxg/exec',
   COOLDOWN_HOURS: 120,
   STORAGE_KEY:     'priao_vote_2026',
+
+  // ─── ANNOUNCEMENT ─────────────────────────────────
+  SHOW_ANNOUNCEMENT: true,  // true = แสดงข้อความใต้โพเดี่ยม / false = ซ่อน
+  ANNOUNCEMENT_TEXT: `📢 หลักเกณฑ์การนับคะแนน Branch Battle 2026
+
+ขอบคุณทุกคนที่ร่วมโหวตกิจกรรมครั้งนี้นะครับ
+
+ระบบนับคะแนนยึดหลัก 1 คน 1 สิทธิ์ ตรวจสอบจากรหัสพนักงานและอุปกรณ์ที่ใช้โหวต หากมีการโหวตซ้ำไม่ว่าจะเปลี่ยน browser หรือโหวตหลายครั้ง ระบบจะนับเฉพาะครั้งแรกเท่านั้น กรณีคะแนนเท่ากัน ระบบตัดสินจากสาขาที่ได้คะแนนถึงเป้าก่อนตามเวลาจริงครับ
+
+ขอแสดงความยินดีกับทุกสาขาที่ร่วมสนุกนะครับ 🎉`,
 };
 
 const BRANCHES = [
@@ -910,8 +934,7 @@ function updateCountdown() {
     timerEl.textContent = 'หมดเวลาแล้ว';
     timerEl.style.color = 'var(--danger)';
     labelEl.textContent = 'การโหวตปิดแล้ว';
-    clearInterval(window._countdownInterval);
-    if (!document.getElementById('result-page').classList.contains('visible')) { showResultPage(); }
+    if (document.getElementById('result-page').style.display === 'none') { showResultPage(); }
     return;
   }
   const days    = Math.floor(diff / (1000*60*60*24));
@@ -943,11 +966,7 @@ async function init() {
   loadState();
   renderCards();
   updateCountdown();
-  if (isVotingClosed()) {
-    showResultPage();
-  } else {
-    window._countdownInterval = setInterval(updateCountdown, 1000);
-  }
+  setInterval(updateCountdown, 1000);
   try {
     const fp = await FingerprintJS.load();
     visitorId = (await fp.get()).visitorId;
@@ -1022,14 +1041,22 @@ function renderResults(results) {
       el.style.width = el.dataset.pct;
     });
   }, 100);
+
+  // Announcement
+  var annEl = document.getElementById('announcement-box');
+  if (annEl) {
+    if (CONFIG.SHOW_ANNOUNCEMENT) {
+      annEl.style.display = 'block';
+      annEl.textContent = CONFIG.ANNOUNCEMENT_TEXT;
+    } else {
+      annEl.style.display = 'none';
+    }
+  }
 }
 
 function showResultPage() {
-  if (document.getElementById('result-page').classList.contains('visible')) return;
   document.getElementById('main-page').style.display = 'none';
-  var rp = document.getElementById('result-page');
-  rp.classList.add('visible');
-  rp.style.display = 'block';
+  document.getElementById('result-page').style.display = 'block';
   loadResults();
 }
 
@@ -1048,6 +1075,7 @@ document.addEventListener('DOMContentLoaded', init);
     <div class="podium-wrap" id="podium-wrap"></div>
     <p class="section-title">คะแนนทุกสาขา</p>
     <div class="result-bars" id="result-bars"></div>
+    <div id="announcement-box" class="announcement-box" style="display:none"></div>
   </div>
 </div>
 </body>
