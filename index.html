@@ -913,7 +913,7 @@ function updateCountdown() {
     timerEl.textContent = 'หมดเวลาแล้ว';
     timerEl.style.color = 'var(--danger)';
     labelEl.textContent = 'การโหวตปิดแล้ว';
-    if (document.getElementById('result-page').style.display === 'none') { showResultPage(); }
+    if (document.getElementById('result-page').classList.contains('visible')) { showResultPage(); }
     return;
   }
   const days    = Math.floor(diff / (1000*60*60*24));
