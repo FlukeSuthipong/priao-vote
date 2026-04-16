@@ -512,6 +512,9 @@
       max-width: 1100px;
       margin: 0 auto;
       padding: 40px 16px 80px;
+    }
+    #result-page.visible {
+      display: block;
       animation: fadeDown 0.8s ease both;
     }
     .result-title {
@@ -1021,7 +1024,9 @@ function renderResults(results) {
 
 function showResultPage() {
   document.getElementById('main-page').style.display = 'none';
-  document.getElementById('result-page').style.display = 'block';
+  var rp = document.getElementById('result-page');
+  rp.classList.add('visible');
+  rp.style.display = 'block';
   loadResults();
 }
 
