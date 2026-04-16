@@ -758,8 +758,57 @@ const BRANCHES = [
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let visitorId    = null;
+let deviceId     = null;   // hardware-level fingerprint (browser-agnostic)
 let voteState    = null;   // { branchId, empId, timestamp }
 let pendingBranchId = null;
+
+// ─── DEVICE FINGERPRINT (browser-agnostic) ───────────────────────────────────
+// รวม signal ที่ไม่เปลี่ยนเมื่อสลับ Chrome ↔ Safari ↔ Firefox บน device เดียวกัน
+async function getDeviceSignals() {
+  const s = {};
+  s.sw  = screen.width;
+  s.sh  = screen.height;
+  s.scd = screen.colorDepth;
+  s.dpr = window.devicePixelRatio || 1;
+  s.cpu = navigator.hardwareConcurrency || 0;
+  s.mem = navigator.deviceMemory       || 0;
+  s.tz  = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  s.lng = navigator.language || '';
+  try {
+    const c  = document.createElement('canvas');
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) s.gpu = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+    }
+  } catch (_) {}
+  try {
+    const c   = document.createElement('canvas');
+    c.width   = 200; c.height = 50;
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font         = '14px Arial';
+    ctx.fillStyle    = '#f60';
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle    = '#069';
+    ctx.fillText('Priao\uD83C\uDF38', 2, 15);
+    ctx.fillStyle    = 'rgba(102,204,0,0.7)';
+    ctx.fillText('Priao\uD83C\uDF38', 4, 17);
+    s.cvs = c.toDataURL().slice(-50);
+  } catch (_) {}
+  return s;
+}
+
+async function computeDeviceId() {
+  try {
+    const s   = await getDeviceSignals();
+    const str = JSON.stringify(s, Object.keys(s).sort());
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch (_) {
+    return null;
+  }
+}
 
 function loadState() {
   try {
@@ -917,7 +966,7 @@ async function submitVote(branchId, empId) {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ branchId, empId, visitorId, timestamp: new Date().toISOString(), userAgent: navigator.userAgent }),
+      body: JSON.stringify({ branchId, empId, visitorId, deviceId, timestamp: new Date().toISOString(), userAgent: navigator.userAgent }),
     });
   } catch (err) {
     console.error('fetch error:', err);
@@ -987,6 +1036,7 @@ async function init() {
   } catch {
     visitorId = `fallback-${Math.random().toString(36).slice(2)}`;
   }
+  deviceId = await computeDeviceId();
   renderCards();
 }
 
