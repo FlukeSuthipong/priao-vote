@@ -512,9 +512,6 @@
       max-width: 1100px;
       margin: 0 auto;
       padding: 40px 16px 80px;
-    }
-    #result-page.visible {
-      display: block;
       animation: fadeDown 0.8s ease both;
     }
     .result-title {
@@ -913,7 +910,8 @@ function updateCountdown() {
     timerEl.textContent = 'หมดเวลาแล้ว';
     timerEl.style.color = 'var(--danger)';
     labelEl.textContent = 'การโหวตปิดแล้ว';
-    if (document.getElementById('result-page').classList.contains('visible')) { showResultPage(); }
+    clearInterval(window._countdownInterval);
+    if (!document.getElementById('result-page').classList.contains('visible')) { showResultPage(); }
     return;
   }
   const days    = Math.floor(diff / (1000*60*60*24));
@@ -945,7 +943,11 @@ async function init() {
   loadState();
   renderCards();
   updateCountdown();
-  setInterval(updateCountdown, 1000);
+  if (isVotingClosed()) {
+    showResultPage();
+  } else {
+    window._countdownInterval = setInterval(updateCountdown, 1000);
+  }
   try {
     const fp = await FingerprintJS.load();
     visitorId = (await fp.get()).visitorId;
@@ -1023,6 +1025,7 @@ function renderResults(results) {
 }
 
 function showResultPage() {
+  if (document.getElementById('result-page').classList.contains('visible')) return;
   document.getElementById('main-page').style.display = 'none';
   var rp = document.getElementById('result-page');
   rp.classList.add('visible');
